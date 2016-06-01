@@ -29,10 +29,10 @@
     "tape": "1.1.2",
     "xml2js": "0.4.16",
     "metalsmith": "2.1.0",
-    "metalsmith-collections": "*",
-    "metalsmith-tags": "*"
+    "metalsmith-collections": "0.7.0",
+    "metalsmith-tags": "1.2.1"
   },
   "scripts": {
-    "test": "node tape"
+    "test": "node test/*js"
   }
 }
