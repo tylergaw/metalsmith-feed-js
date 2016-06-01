@@ -3,8 +3,6 @@ metalsmith-feed-js
 
 To each there own and thank you for `hurrymaplelad` for the original metalsmith-feed.
 
-Why the fork? CoffeeScript Sucks (tm)
-
 This is essentially a fork of https://github.com/hurrymaplelad/metalsmith-feed with a few minor improvements to support tags as well as collections.
 
 ---
@@ -71,9 +69,49 @@ metalsmith('example')
 
 - `destination` **string** *Optional*. File path to write the rendered XML feed. Defaults to `'rss.xml'`.
 
+- `itemDataHandlers` **object** *Optional*. Object of functions for custom handling of item values. See [below](#custom-handling-of-item-values)
+
 Remaining options are passed to the [rss](https://github.com/dylang/node-rss) module as `feedOptions`, along with `metadata.site`.
 
 If files have `path` metadata (perhaps from [permalinks](https://github.com/RobinThrift/metalsmith-paginate)) but not `url` metadata, we'll prefix `path` with `site_url` to generate links. Feed item descriptions default to `file.less` from metalsmith-more, `file.excerpt` from metalsmith-excerpt, and finally the full `file.contents`.
+
+### Custom Handling of Item values
+
+In some cases, you'll want finer handling of each key of an item, for instance, the author. By default `metalsmith-feed` will use `site.author` for the `dc:creator` on each feed item. Each post file may also contain an `author` key in its front matter. If you would like to dictate how the value for each key is discovered, you can override default behavior using the `itemDataHandlers`.
+
+In this case, we want a nested structure for author data:
+
+```markdown
+---
+title: My Second Post
+author:
+  name: Janie Jones
+  bio: She's in live with rock'n'roll, woah!
+---
+```
+
+we would write a custom `author` handler function to set the `dc:creator` value on the feed item.
+
+```javascript
+.use(feed({
+  collection: 'posts',
+  itemDataHandlers: {
+    author: (file, defaultValue) => {
+      const author = file.author;
+
+      if (!author) {
+        return defaultValue;
+      }
+
+      if (typeof author === 'string') {
+        return author;
+      } else {
+        return author.name;
+      }
+    }
+  }
+}))
+````
 
 ## Contributing
 

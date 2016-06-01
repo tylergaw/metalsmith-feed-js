@@ -13,7 +13,7 @@ const metadata = {
     url: 'http://www.example.org',
     author: 'Philodemus'
   }
-}
+};
 
 test('it renders rss feed', (t) => {
   metalsmith('test/fixtures')
@@ -22,7 +22,22 @@ test('it renders rss feed', (t) => {
       posts: '*.html'
     }))
     .use(feed({
-      collection: 'posts'
+      collection: 'posts',
+      itemDataHandlers: {
+        author: (file, defaultValue) => {
+          const author = file.author;
+
+          if (!author) {
+            return defaultValue;
+          }
+
+          if (typeof author === 'string') {
+            return author;
+          } else {
+            return author.name;
+          }
+        }
+      }
     }))
     .build((err, files) => {
       t.ok(!err, 'should be no error building')
@@ -36,11 +51,24 @@ test('it renders rss feed', (t) => {
         const channel = result['rss']['channel'][0];
         t.equal(channel.title[0], metadata.site.title);
         t.equal(channel.author[0], metadata.site.author);
-        t.equal(channel.item.length, 1);
+        t.equal(channel.item.length, 3);
 
-        const post = channel.item[0];
-        t.equal(post.title[0], 'Theory of Juice');
-        t.equal(post.description[0], '<p>juice appeal</p>\n');
+        const post1 = channel.item[0];
+        t.equal(post1.title[0], 'Theory of Juice');
+        t.equal(post1.description[0], '<p>juice appeal</p>\n');
+        t.equal(post1['dc:creator'][0], 'Joe Mosely');
+
+        // Test custom itemDataHandlers with a nested author value
+        const post2 = channel.item[1];
+        t.equal(post2.title[0], 'My Second Post');
+        t.equal(post2.description[0], '<p>She don\'t like her boring job, no!</p>\n');
+        t.equal(post2['dc:creator'][0], 'Janie Jones');
+
+        // Test default author
+        const post3 = channel.item[2];
+        t.equal(post3.title[0], 'All The Defaults');
+        t.equal(post3.description[0], '<p>Test for defaults</p>\n');
+        t.equal(post3['dc:creator'][0], metadata.site.author);
 
         t.end();
       })
